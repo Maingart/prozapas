@@ -4,6 +4,7 @@ import { useSpaces } from './context/SpacesContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SpaceLayout from './components/SpaceLayout'
 import EmptyState from './components/EmptyState'
+import PWAUpdatePrompt from './components/PWAUpdatePrompt'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Items from './pages/Items'
@@ -89,5 +90,10 @@ export default function App() {
     )
   }
 
-  return <AppContent />
+  return (
+    <>
+      <AppContent />
+      <PWAUpdatePrompt />
+    </>
+  )
 }
