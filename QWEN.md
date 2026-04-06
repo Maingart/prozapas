@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Про Запас** — это приложение для учёта бытовых предметов и расходных материалов в различных пространствах (дом, офис, машина, гараж, дача и т.д.). Проект состоит из backend на FastAPI и frontend на React + TypeScript.
+**Про Запас** is an inventory management application for household items and consumables across various spaces (home, office, car, garage, dacha, etc.). The project consists of a FastAPI backend and a React + TypeScript frontend.
 
 ### Architecture
 
@@ -13,114 +13,55 @@
 
 ### Key Features
 
-- Регистрация и аутентификация пользователей (JWT-токены, 7-дневный срок жизни)
-- Мульти-пространства (Spaces) — дом, офис, машина, гараж и т.д.
-- CRUD предметов (Items) с привязкой к пространству
-- Система приглашений (Invites) для совместного доступа к пространствам
-- Роли пользователей: `owner` / `member`
-- Операции с количеством: `add`, `consume`, `bulk_update`
-- Отслеживание низкого остатка (quantity <= min_quantity)
-- Seed-скрипт с реалистичными данными (Faker, ~40+ категорий предметов)
+- User registration and authentication (JWT tokens, 7-day lifetime)
+- Multi-space support (Spaces) — home, office, car, garage, etc.
+- CRUD operations for Items linked to spaces
+- Invite system for collaborative space access
+- User roles: `owner` / `member`
+- Quantity operations: `add`, `consume`, `bulk_update`
+- Low stock tracking (quantity <= min_quantity)
+- Quantity history tracking (QuantitySnapshot model)
+- Seed script with realistic data (Faker, ~40+ item categories)
 
 ## Directory Structure
 
 ```
 prozapas/
-├── main.py              # Точка входа FastAPI, подключение роутеров
-├── models.py            # SQLAlchemy модели (User, Space, Membership, Invite, Item)
-├── schemas.py           # Pydantic схемы для валидации и сериализации
+├── main.py              # FastAPI entry point, router registration
+├── models.py            # SQLAlchemy models (User, Space, Membership, Invite, Item, QuantitySnapshot)
+├── schemas.py           # Pydantic schemas for validation and serialization
 ├── database.py          # DB engine, session, Base
-├── crud.py              # CRUD операции для Items
-├── auth_config.py       # JWT конфигурация (SECRET_KEY, ALGORITHM)
-├── auth_utils.py        # Утилиты: hash_password, verify_password, create/decode token
-├── dependencies.py      # FastAPI зависимости: get_current_user, require_membership
-├── seed.py              # Генерация тестовых данных через Faker
-├── routes/              # API роутеры
+├── crud.py              # CRUD operations for Items
+├── auth_config.py       # JWT configuration (SECRET_KEY, ALGORITHM)
+├── auth_utils.py        # Utilities: hash_password, verify_password, create/decode token
+├── dependencies.py      # FastAPI dependencies: get_current_user, require_membership
+├── seed.py              # Test data generation via Faker
+├── test_auth.py         # Authentication tests
+├── requirements.txt     # Python dependencies
+├── routes/              # API routers
+│   ├── __init__.py
 │   ├── auth.py          # /api/auth/register, /login, /me
 │   ├── spaces.py        # /api/spaces, /invites
 │   └── items.py         # /api/spaces/{space_id}/items
-├── frontend/            # React-фронтенд (Vite + TypeScript)
-│   ├── src/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-└── requirements.txt     # Python зависимости
+└── frontend/            # React frontend (Vite + TypeScript)
+    ├── src/
+    │   ├── api/         # API client modules
+    │   ├── components/  # Reusable UI components
+    │   ├── context/     # React context providers (Auth, Spaces)
+    │   ├── pages/       # Page components
+    │   ├── App.tsx      # Main app component with routing
+    │   ├── main.tsx     # Entry point
+    │   └── index.css    # Global styles
+    ├── index.html
+    ├── package.json
+    ├── vite.config.ts
+    └── tailwind.config.js
 ```
-
-## Building and Running
-
-### Backend
-
-```bash
-# Установка зависимостей
-pip install -r requirements.txt
-
-# Запуск сервера (uvicorn)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Генерация тестовых данных
-python seed.py
-```
-
-Сервер доступен по адресу `http://localhost:8000`. API Docs: `http://localhost:8000/docs`.
-
-### Frontend
-
-```bash
-cd frontend
-
-# Установка зависимостей
-npm install
-
-# Режим разработки
-npm run dev
-
-# Сборка
-npm run build
-
-# Preview production-сборки
-npm run preview
-```
-
-Frontend доступен по адресу `http://localhost:5173`.
-
-### Default Credentials
-
-| Email | Password |
-|-------|----------|
-| demo@prozapas.local | demo |
-| (сгенерированные) | password123 |
-
-## API Endpoints
-
-### Auth
-- `POST /api/auth/register` — регистрация
-- `POST /api/auth/login` — вход, возврат JWT токена
-- `GET /api/auth/me` — текущий пользователь (требует Bearer token)
-
-### Spaces
-- `GET /api/spaces` — список пространств пользователя
-- `POST /api/spaces` — создание пространства
-- `GET /api/spaces/{space_id}` — детали пространства с участниками
-- `DELETE /api/spaces/{space_id}` — удаление (только owner)
-- `POST /api/spaces/{space_id}/invites` — создание приглашения (48h expiry)
-- `GET /api/invites/{token}` — принятие приглашения
-
-### Items (в контексте пространства)
-- `GET /api/spaces/{space_id}/items` — список предметов
-- `GET /api/spaces/{space_id}/items/{item_id}` — один предмет
-- `POST /api/spaces/{space_id}/items` — создание
-- `PUT /api/spaces/{space_id}/items/{item_id}` — обновление
-- `DELETE /api/spaces/{space_id}/items/{item_id}` — удаление
-- `PATCH /api/spaces/{space_id}/items/bulk` — массовое обновление количества
-- `POST /api/spaces/{space_id}/items/{item_id}/add` — добавить количество
-- `POST /api/spaces/{space_id}/items/{item_id}/consume` — израсходовать количество
 
 ## Database Models
 
 ### User
-- `id`, `email` (unique), `hashed_password`, `created_at`
+- `id`, `email` (unique, indexed), `hashed_password`, `created_at`
 - Relationships: `memberships`, `created_invites`
 
 ### Space
@@ -129,23 +70,122 @@ Frontend доступен по адресу `http://localhost:5173`.
 
 ### Membership
 - `id`, `user_id`, `space_id`, `role` (owner/member), `joined_at`
+- Relationships: `user`, `space`
 
 ### Invite
-- `id`, `space_id`, `token` (unique), `created_by`, `expires_at`, `used`, `created_at`
+- `id`, `space_id`, `token` (unique, indexed), `created_by`, `expires_at`, `used`, `created_at`
+- Relationships: `space`, `creator`
 
 ### Item
-- `id`, `name`, `quantity`, `unit`, `min_quantity`, `location`, `is_consumable`, `space_id` (nullable), `created_at`, `updated_at`
+- `id`, `name` (indexed), `quantity`, `unit`, `min_quantity`, `location`, `is_consumable`, `space_id` (nullable), `created_at`, `updated_at`
+- Relationships: `space`, `quantity_history`
+
+### QuantitySnapshot
+- `id`, `item_id`, `quantity`, `change_type` (add/consume/update/create), `recorded_at`
+- Relationships: `item`
+
+## Building and Running
+
+### Backend
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# Generate test data
+python seed.py
+```
+
+Server available at `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+
+### Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development mode
+npm run dev
+
+# Production build
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+Frontend available at `http://localhost:5173`.
+
+### Default Credentials
+
+| Email | Password |
+|-------|----------|
+| demo@prozapas.local | demo |
+| (auto-generated users) | password123 |
+
+## API Endpoints
+
+### Auth (`/api/auth`)
+- `POST /api/auth/register` — Register new user
+- `POST /api/auth/login` — Login, returns JWT token
+- `GET /api/auth/me` — Get current user (requires Bearer token)
+
+### Spaces (`/api`)
+- `GET /api/spaces` — List user's spaces
+- `POST /api/spaces` — Create new space
+- `GET /api/spaces/{space_id}` — Space details with members
+- `DELETE /api/spaces/{space_id}` — Delete space (owner only)
+- `DELETE /api/spaces/{space_id}/members/{user_id}` — Remove member (owner only)
+- `DELETE /api/spaces/{space_id}/leave` — Leave space (not for owners)
+- `POST /api/spaces/{space_id}/invites` — Create invite (48h expiry)
+- `GET /api/invites/{token}` — Accept invite
+
+### Items (context of space)
+- `GET /api/spaces/{space_id}/items` — List items
+- `GET /api/spaces/{space_id}/items/{item_id}` — Single item
+- `POST /api/spaces/{space_id}/items` — Create item
+- `PUT /api/spaces/{space_id}/items/{item_id}` — Update item
+- `DELETE /api/spaces/{space_id}/items/{item_id}` — Delete item
+- `PATCH /api/spaces/{space_id}/items/bulk` — Bulk quantity update
+- `POST /api/spaces/{space_id}/items/{item_id}/add` — Add quantity
+- `POST /api/spaces/{space_id}/items/{item_id}/consume` — Consume quantity
 
 ## Development Conventions
 
-- **Pydantic v2** стиль: `from_attributes = True` вместо `orm_mode`
-- **SQLAlchemy 2.0**: declarative_base, relationship с `back_populates`
-- **CORS**: разрешён origin `http://localhost:5173` (Vite dev server)
-- **JWT**: `sub` claim должен быть строкой (требование python-jose)
-- **SQLite**: `check_same_thread=False` для многопоточного доступа
+- **Pydantic v2** style: `from_attributes = True` instead of `orm_mode`
+- **SQLAlchemy 2.0**: declarative_base, relationships with `back_populates`
+- **CORS**: allows origin `http://localhost:5173` (Vite dev server)
+- **JWT**: `sub` claim must be a string (python-jose requirement)
+- **SQLite**: `check_same_thread=False` for multi-threaded access
+- **Frontend**: TypeScript strict mode, React Query for data fetching, Tailwind CSS for styling
 
 ## Key Configuration
 
-- **SECRET_KEY:** `"prozapas-dev-secret-key-change-in-production"` (⚠️ требует замены для production)
-- **ACCESS_TOKEN_EXPIRE_MINUTES:** 10080 (7 дней)
+- **SECRET_KEY:** `"prozapas-dev-secret-key-change-in-production"` (⚠️ must be changed for production)
+- **ALGORITHM:** `HS256`
+- **ACCESS_TOKEN_EXPIRE_MINUTES:** 10080 (7 days)
 - **Database URL:** `sqlite:///./prozapas.db`
+- **CORS Origin:** `http://localhost:5173`
+
+## Frontend Structure
+
+### Pages
+- **Login/Register** — Authentication flows
+- **Items** — Main item list per space
+- **LowStock** — Items with quantity below minimum
+- **SpaceSettings** — Space configuration and member management
+- **AcceptInvite** — Invite acceptance page
+
+### Context Providers
+- **AuthContext** — User authentication state
+- **SpacesContext** — Space data and selection
+
+### Key Components
+- **SpaceLayout** — Layout wrapper for space-specific pages with sidebar navigation
+- **ProtectedRoute** — Route guard for authenticated access
+- **EmptyState** — Shown when user has no spaces
