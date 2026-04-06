@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Background: rounded rectangle with indigo-600 color -->
+  <rect width="32" height="32" rx="8" fill="#4f46e5" />
+  
+  <!-- Icon: scaled and centered from 24x24 to 20x20 -->
+  <g transform="translate(6, 6) scale(0.83333)">
+    <path 
+      stroke="white" 
+      stroke-width="2" 
+      stroke-linecap="round" 
+      stroke-linejoin="round" 
+      fill="none" 
+      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" 
+    />
+  </g>
+</svg>
