@@ -92,7 +92,7 @@ export default function AcceptInvite() {
           <h1 className="text-xl font-bold text-slate-900 mb-2">Ошибка</h1>
           <p className="text-slate-500 mb-6">{result.error}</p>
           <button
-            onClick={() => navigate(`/space/${result.spaceId}/items`)}
+            onClick={() => navigate('/')}
             className="btn-secondary"
           >
             На товары

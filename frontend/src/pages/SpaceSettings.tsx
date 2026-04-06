@@ -183,10 +183,11 @@ export default function SpaceSettings() {
                 Срок действия: 48 часов. Отправьте ссылку тому, кого хотите пригласить.
               </p>
               <button
-                onClick={() => { setInviteUrl(''); setCopied(false) }}
-                className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
+                onClick={() => createInviteMutation.mutate()}
+                disabled={createInviteMutation.isPending}
+                className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Создать новую ссылку
+                {createInviteMutation.isPending ? 'Создание...' : 'Создать новую ссылку'}
               </button>
             </div>
           )}

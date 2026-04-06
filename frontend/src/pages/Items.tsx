@@ -28,6 +28,12 @@ export default function Items() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editQty, setEditQty] = useState<string>('0')
 
+  const addMutation = useMutation({
+    mutationFn: ({ id: itemId, qty }: { id: number; qty: number }) =>
+      currentSpaceId ? itemsApi.add(currentSpaceId, itemId, qty) : Promise.reject(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['items', currentSpaceId] }),
+  })
+
   const updateMutation = useMutation({
     mutationFn: ({ id: itemId, qty }: { id: number; qty: number }) =>
       currentSpaceId ? itemsApi.updateOne(currentSpaceId, itemId, qty) : Promise.reject(),
@@ -69,9 +75,9 @@ export default function Items() {
             }}
             onKeyDown={e => {
               if (e.key === 'Enter') updateMutation.mutate({ id: item.id, qty: editQty === '' ? 0 : Number(editQty) })
-              if (e.key === 'Escape') setEditingId(null)
+              if (e.key === 'Escape') { setEditingId(null); setEditQty('0') }
             }}
-            className="w-16 px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-20 px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             autoFocus
           />
           <button
@@ -95,15 +101,26 @@ export default function Items() {
       )
     }
     return (
-      <button
-        onClick={() => { setEditingId(item.id); setEditQty(String(item.quantity)) }}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-        Обновить
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => addMutation.mutate({ id: item.id, qty: 1 })}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          1
+        </button>
+        <button
+          onClick={() => { setEditingId(item.id); setEditQty(String(item.min_quantity * 2)) }}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Задать
+        </button>
+      </div>
     )
   }
 
