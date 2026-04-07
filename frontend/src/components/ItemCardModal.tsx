@@ -276,7 +276,6 @@ export default function ItemCardModal({ isOpen, onClose, item, spaceId }: ItemCa
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="input-field"
-                  autoFocus
                 />
               </div>
 

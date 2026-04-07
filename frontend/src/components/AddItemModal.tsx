@@ -100,7 +100,6 @@ export default function AddItemModal({ isOpen, onClose, spaceId }: AddItemModalP
               onChange={e => setName(e.target.value)}
               placeholder="Например: Молоко"
               className="input-field"
-              autoFocus
             />
           </div>
 
