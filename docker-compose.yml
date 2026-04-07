@@ -53,29 +53,10 @@ services:
       args:
         VITE_API_URL: http://backend:8000
     container_name: prozapas-frontend
-    expose:
-      - "80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - prozapas-net
-
-  # Caddy Reverse Proxy (Automatic HTTPS)
-  caddy:
-    image: caddy:2-alpine
-    container_name: prozapas-caddy
-    environment:
-      DOMAIN: ${DOMAIN:-yourdomain.com}
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
     depends_on:
-      - frontend
+      - backend
     restart: unless-stopped
     networks:
       - prozapas-net
@@ -83,8 +64,6 @@ services:
 volumes:
   postgres_data:
     driver: local
-  caddy_data:
-  caddy_config:
 
 networks:
   prozapas-net:

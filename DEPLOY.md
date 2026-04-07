@@ -161,39 +161,74 @@ curl -X POST http://localhost/api/auth/register \
 
 ---
 
-## 5. HTTPS with Let's Encrypt (Recommended)
+## 5. HTTPS with Let's Encrypt (When You Get a Domain)
 
-### Option A: Using Caddy (Easiest)
+### Current Setup: HTTP Only
 
-Replace nginx with Caddy for automatic HTTPS:
-
-1. Install Caddy on the host:
-```bash
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo apt-key add -
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update
-sudo apt install caddy
+Right now your app runs via **HTTP** on port 80:
+```
+http://YOUR_VPS_IP
 ```
 
-2. Create Caddyfile:
+This works fine for testing without a domain!
+
+### When You Get a Domain
+
+Once you have a domain, you can add HTTPS using one of these options:
+
+#### Option A: Cloudflare Tunnel (Free, No DNS Setup)
+
+Cloudflare gives you a free HTTPS URL like `yourname.trycloudflare.com`:
+
+1. Install `cloudflared` on your VPS:
 ```bash
-sudo nano /etc/caddy/Caddyfile
+# Ubuntu/Debian
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+chmod +x /usr/local/bin/cloudflared
 ```
 
+2. Create tunnel (no account needed for quick tunnels):
+```bash
+cloudflared tunnel --url http://localhost:80
+```
+
+3. You'll get a public HTTPS URL like: `https://abc123.trycloudflare.com`
+
+For permanent setup with account, see [Cloudflare Zero Trust](https://one.dash.cloudflare.com/).
+
+#### Option B: Caddy (Automatic HTTPS with Domain)
+
+If you have a domain pointing to your VPS:
+
+1. Add to `docker-compose.yml`:
+```yaml
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+```
+
+2. Create `Caddyfile`:
 ```
 yourdomain.com {
-    reverse_proxy localhost:80
+    reverse_proxy frontend:80
 }
 ```
 
-3. Start Caddy:
-```bash
-sudo systemctl enable caddy
-sudo systemctl start caddy
-```
+3. Redeploy: `docker compose up -d --build`
 
-### Option B: Using certbot + nginx on host
+Caddy automatically obtains and renews Let's Encrypt certificates!
+
+#### Option C: Certbot (Manual Certificates)
 
 ```bash
 # Install certbot
@@ -202,7 +237,7 @@ sudo apt install certbot python3-certbot-nginx
 # Get certificate
 sudo certbot certonly --standalone -d yourdomain.com
 
-# Set up cron for renewal
+# Set up auto-renewal
 sudo certbot renew --dry-run
 ```
 
@@ -320,14 +355,14 @@ docker compose up -d --build
 
 - [ ] Changed `SECRET_KEY` to a random 64+ character string
 - [ ] Changed PostgreSQL password from default
-- [ ] Set `CORS_ORIGINS` to your production domain
-- [ ] Set up HTTPS (Let's Encrypt or Cloudflare)
+- [ ] Set `CORS_ORIGINS` to your production domain (if applicable)
 - [ ] Set up automatic backups
 - [ ] Set up monitoring (optional: Uptime Kuma, Grafana)
 - [ ] Removed `seed.py` from production (or added flag)
 - [ ] Configured firewall (ufw allow 80, 443, 22)
 - [ ] Set up SSH key authentication
 - [ ] Disabled root SSH login
+- [ ] (Optional) Get a domain and set up HTTPS
 
 ---
 
