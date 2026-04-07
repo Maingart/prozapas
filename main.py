@@ -7,15 +7,18 @@ from routes.auth import router as auth_router
 from routes.spaces import router as spaces_router
 from routes.items import router as items_router
 
-# Создание таблиц
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title="Про запас",
     description="Backend для учёта бытовых предметов",
     version="2.0.0",
     redirect_slashes=False,
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    """Create tables on startup, safe to call multiple times."""
+    Base.metadata.create_all(bind=engine)
 
 # CORS для React-фронтенда
 # Читаем из env: через запятую, например "http://localhost:5173,https://example.com"
