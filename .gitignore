@@ -25,7 +25,6 @@ ENV/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Database
 *.db
@@ -41,6 +40,7 @@ vite.log
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Node.js (Frontend)
 node_modules/
@@ -63,3 +63,10 @@ htmlcov/
 # Temporary files
 *.tmp
 *.bak
+
+# Docker
+.dockerignore
+frontend/.dockerignore
+
+# Documentation (optional: keep deployment docs in repo)
+# DEPLOY.md - keep this!
