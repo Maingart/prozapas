@@ -6,6 +6,7 @@ from database import engine, Base
 from routes.auth import router as auth_router
 from routes.spaces import router as spaces_router
 from routes.items import router as items_router
+from routes.websocket import router as websocket_router
 
 app = FastAPI(
     title="Про запас",
@@ -36,6 +37,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(spaces_router)
 app.include_router(items_router)
+app.include_router(websocket_router)
 
 
 @app.get("/")

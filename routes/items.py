@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from crud import get_item, create_item, update_item, delete_item
@@ -8,6 +8,7 @@ from database import get_db
 from models import Item, Membership, User, QuantitySnapshot
 from schemas import ItemCreate, ItemUpdate, ItemResponse, BulkUpdateItem, QuantityChange, QuantitySnapshotEntry
 from dependencies import get_current_user, require_membership
+from presence import presence_manager
 
 router = APIRouter(prefix="/api/spaces/{space_id}/items", tags=["items"])
 
@@ -57,6 +58,7 @@ def read_item(
 def create_new_item(
     space_id: int,
     item: ItemCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
@@ -65,6 +67,14 @@ def create_new_item(
     _record_snapshot(db, created_item.id, created_item.quantity, "create")
     db.commit()
     db.refresh(created_item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_created",
+        item_data={"id": created_item.id, "name": created_item.name, "quantity": created_item.quantity, "unit": created_item.unit, "min_quantity": created_item.min_quantity, "location": created_item.location, "is_consumable": created_item.is_consumable, "space_id": created_item.space_id, "created_at": created_item.created_at, "updated_at": created_item.updated_at},
+    )
     return created_item
 
 
@@ -73,6 +83,7 @@ def update_existing_item(
     space_id: int,
     item_id: int,
     item: ItemUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
@@ -85,6 +96,14 @@ def update_existing_item(
         _record_snapshot(db, item_id, updated_item.quantity, "update")
         db.commit()
         db.refresh(updated_item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_updated",
+        item_data={"id": updated_item.id, "name": updated_item.name, "quantity": updated_item.quantity, "unit": updated_item.unit, "min_quantity": updated_item.min_quantity, "location": updated_item.location, "is_consumable": updated_item.is_consumable, "space_id": updated_item.space_id, "created_at": updated_item.created_at.isoformat(), "updated_at": updated_item.updated_at.isoformat()},
+    )
     return updated_item
 
 
@@ -92,6 +111,7 @@ def update_existing_item(
 def delete_existing_item(
     space_id: int,
     item_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
@@ -99,13 +119,23 @@ def delete_existing_item(
     db_item = get_item(db, item_id)
     if not db_item or db_item.space_id != space_id:
         raise HTTPException(status_code=404, detail="Item not found")
-    return delete_item(db, db_item)
+    deleted_item = delete_item(db, db_item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_deleted",
+        item_data={"id": deleted_item.id},
+    )
+    return deleted_item
 
 
 @router.patch("/bulk", response_model=List[ItemResponse])
 def bulk_update_items(
     space_id: int,
     updates: List[BulkUpdateItem],
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
@@ -123,6 +153,14 @@ def bulk_update_items(
     db.commit()
     for item in updated:
         db.refresh(item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_updated",
+        item_data={"bulk": True, "items": [{"id": item.id, "quantity": item.quantity} for item in updated]},
+    )
     return updated
 
 
@@ -130,10 +168,11 @@ def bulk_update_items(
 def add_to_item(
     space_id: int,
     item_id: int,
-    payload: QuantityChange = QuantityChange(),
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
+    payload: QuantityChange = QuantityChange(),
 ):
     db_item = get_item(db, item_id)
     if not db_item or db_item.space_id != space_id:
@@ -142,6 +181,14 @@ def add_to_item(
     _record_snapshot(db, item_id, db_item.quantity, "add")
     db.commit()
     db.refresh(db_item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_updated",
+        item_data={"id": db_item.id, "name": db_item.name, "quantity": db_item.quantity, "unit": db_item.unit, "min_quantity": db_item.min_quantity, "location": db_item.location, "is_consumable": db_item.is_consumable, "space_id": db_item.space_id, "created_at": db_item.created_at.isoformat(), "updated_at": db_item.updated_at.isoformat()},
+    )
     return db_item
 
 
@@ -149,10 +196,11 @@ def add_to_item(
 def consume_from_item(
     space_id: int,
     item_id: int,
-    payload: QuantityChange = QuantityChange(),
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     _membership: Membership = Depends(require_membership),
     db: Session = Depends(get_db),
+    payload: QuantityChange = QuantityChange(),
 ):
     db_item = get_item(db, item_id)
     if not db_item or db_item.space_id != space_id:
@@ -161,6 +209,14 @@ def consume_from_item(
     _record_snapshot(db, item_id, db_item.quantity, "consume")
     db.commit()
     db.refresh(db_item)
+    
+    # Broadcast to other users in the space
+    background_tasks.add_task(
+        presence_manager.broadcast_item_change,
+        space_id=space_id,
+        event="item_updated",
+        item_data={"id": db_item.id, "name": db_item.name, "quantity": db_item.quantity, "unit": db_item.unit, "min_quantity": db_item.min_quantity, "location": db_item.location, "is_consumable": db_item.is_consumable, "space_id": db_item.space_id, "created_at": db_item.created_at.isoformat(), "updated_at": db_item.updated_at.isoformat()},
+    )
     return db_item
 
 

@@ -133,3 +133,17 @@ class QuantitySnapshotEntry(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- WebSocket presence schemas ---
+
+class OnlineUser(BaseModel):
+    user_id: int
+    email: str
+
+
+class PresenceEvent(BaseModel):
+    event: str  # "join", "leave", "init", "pong"
+    user_id: Optional[int] = None
+    email: Optional[str] = None
+    online_users: List[OnlineUser] = []
